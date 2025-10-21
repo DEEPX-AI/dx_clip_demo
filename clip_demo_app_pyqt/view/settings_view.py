@@ -136,6 +136,9 @@ class SettingsView(QMainWindow):
         self.dynamic_font_mode_dropdown.addItem("fit")
         self.dynamic_font_mode_dropdown.addItem("word_wrap")
         self.dynamic_font_mode_dropdown.addItem("fit + min")
+        self.dynamic_font_mode_dropdown.addItem("fit + setting")
+        self.dynamic_font_mode_dropdown.addItem("setting + word_wrap")
+        self.dynamic_font_mode_dropdown.addItem("fit + large mode (show top 1)")
         self.dynamic_font_mode_dropdown.addItem("fit + min + word_wrap")
         self.dynamic_font_mode_dropdown.setCurrentText("fit")  # 기본값 'fit'
         self.dynamic_font_mode_dropdown.currentTextChanged.connect(self.__on_layout_mode_change)
@@ -143,10 +146,10 @@ class SettingsView(QMainWindow):
         font_setting_sub1_layout.addWidget(self.dynamic_font_mode_dropdown)
 
         # Minimum Font Size input (enabled only for 'fit' option)
-        self.min_font_size_label = QLabel("Minimum Font Size:")
+        self.min_font_size_label = QLabel("Minimum Font Size (or setting text size for 'fit + setting'):")
         self.min_font_size_input = QSpinBox(self)
         self.min_font_size_input.setValue(self.ui_config.min_font_size)
-        self.min_font_size_input.setRange(5, 10)
+        self.min_font_size_input.setRange(5, 20)
         self.min_font_size_input.setEnabled(False)
         font_setting_sub2_layout.addWidget(self.min_font_size_label)
         font_setting_sub2_layout.addWidget(self.min_font_size_input)
@@ -187,6 +190,18 @@ class SettingsView(QMainWindow):
         self.ui_config.inference_engine_async_mode = self.inference_engine_async_mode_checkbox.isChecked()
         self.ui_config.dynamic_font_mode = self.dynamic_font_mode_dropdown.currentText()
         self.ui_config.min_font_size = self.min_font_size_input.value()
+        if self.dynamic_font_mode_dropdown.currentText() == "fit + setting":
+            self.ui_config.fix_font_size = self.min_font_size_input.value()
+            self.ui_config.min_font_size = 8
+            if self.ui_config.fix_font_size > 16:
+                print("Warning: Setting a large fixed font size may cause display issues.")
+                self.ui_config.number_of_alarms = 1
+        if self.dynamic_font_mode_dropdown.currentText() == "setting + word_wrap":
+            self.ui_config.fix_font_size = self.min_font_size_input.value()
+        if self.dynamic_font_mode_dropdown.currentText() == "fit + large mode (show top 1)":
+            self.ui_config.fix_font_size = self.min_font_size_input.value()
+            self.ui_config.min_font_size = 8
+            self.ui_config.number_of_alarms = 1
 
         # adjust video_grid_info, video_path_lists and num_channels
         if self.ui_config.merge_central_grid:
@@ -205,8 +220,16 @@ class SettingsView(QMainWindow):
         self.success_cb(self)
 
     def __on_layout_mode_change(self, text):
-        if "min" in text:
+        if text == "fit" or text == "word_wrap":
+            self.min_font_size_input.setEnabled(False)
+            self.min_font_size_input.setValue(8)
+        elif text == "fit + min" or text == "fit + min + word_wrap" or text == "fit + setting" or text == "setting + word_wrap":
             self.min_font_size_input.setEnabled(True)
+            self.min_font_size_input.setValue(8)
+        elif text == "fit + large mode (show top 1)":
+            self.min_font_size_input.setEnabled(True)
+            self.min_font_size_input.setRange(14, 20)
+            self.min_font_size_input.setValue(16)
         else:
             self.min_font_size_input.setEnabled(False)
             

@@ -899,6 +899,13 @@ class ClipView(Base, QMainWindow, metaclass=CombinedMeta):
         sentence_output_area.setWidgetResizable(True)
         sentence_output_area.setFixedHeight(
             font_line_height * self.ui_config.number_of_alarms + font_bottom_padding)
+        if font_line_height > 16:
+            if self.ui_config.number_of_alarms == 1:
+                sentence_output_area.setFixedHeight(
+                    font_line_height * 2 + font_bottom_padding)
+        elif font_line_height > 13 and "word_wrap" in self.ui_config.dynamic_font_mode:
+                sentence_output_area.setFixedHeight(
+                    font_line_height * 3.5 + font_bottom_padding)
         sentence_output_area.setMinimumWidth(self.ui_helper.video_size[0])  # 너비 설정
         sentence_output_area.setAlignment(Qt.AlignCenter)
         sentence_output_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -1053,17 +1060,23 @@ class ClipView(Base, QMainWindow, metaclass=CombinedMeta):
             elif item.layout() is not None:
                 self.clear_layout(item.layout())
 
-    def __adjust_font_size_to_fit(self, label, max_width, min_font_size=None):
+    def __adjust_font_size_to_fit(self, label, max_width, min_font_size=None, word_wrap=False):
         font = label.font()
         font_metrics = QFontMetrics(font)
-
-        while font_metrics.horizontalAdvance(label.text()) > max_width and font.pointSize() > 1:
+        while font_metrics.horizontalAdvance(label.text()) > max_width and font.pointSize() > 1 and (not word_wrap):
             if min_font_size is not None and font.pointSize() <= min_font_size:
-                print("breaked!!!")
+                print("reached min font size")
                 break
             font.setPointSize(font.pointSize() - 1)
             label.setFont(font)
             font_metrics = QFontMetrics(font)
+        label.setStyleSheet(f"""
+                QLabel {{
+                    line-height: {font_metrics.height()}px;
+                    margin: 0px;
+                    padding: 0px;
+                }}
+            """)
 
     def update_sentence_output(self, idx: int, text: str, progress: int, score: float,
                                alarm: bool, alarm_title: str, alarm_position: int, alarm_color: str,
@@ -1105,6 +1118,8 @@ class ClipView(Base, QMainWindow, metaclass=CombinedMeta):
 
         # sentence_output
         sentence_output_label = QLabel(text, self)
+        if "setting" in self.ui_config.dynamic_font_mode or "large" in self.ui_config.dynamic_font_mode:
+            font.setPointSize(self.ui_config.fix_font_size)
         sentence_output_label.setFont(font)
         sentence_output_label.setMinimumWidth(self.ui_helper.video_size[0])  # 너비 설정
 
@@ -1119,12 +1134,13 @@ class ClipView(Base, QMainWindow, metaclass=CombinedMeta):
         if "fit" in self.ui_config.dynamic_font_mode:  # 너비 기준으로 자동 사이즈 조정
             parent_widget = sentence_output_box.parentWidget()
             if parent_widget:
-                if "min" in self.ui_config.dynamic_font_mode:
-                    self.__adjust_font_size_to_fit(sentence_output_label, parent_widget.width(), self.ui_config.min_font_size)
+                if "min" in self.ui_config.dynamic_font_mode or "setting" in self.ui_config.dynamic_font_mode or "large" in self.ui_config.dynamic_font_mode:
+                    word_wrap = "word_wrap" in self.ui_config.dynamic_font_mode or self.ui_config.number_of_alarms == 1
+                    self.__adjust_font_size_to_fit(sentence_output_label, parent_widget.width(), self.ui_config.min_font_size, word_wrap)
                 else:
                     self.__adjust_font_size_to_fit(sentence_output_label, parent_widget.width())
         
-        if "word_wrap" in self.ui_config.dynamic_font_mode: # 줄바꿈 허용
+        if "word_wrap" in self.ui_config.dynamic_font_mode or self.ui_config.number_of_alarms == 1: # 줄바꿈 허용
             sentence_output_label.setWordWrap(True)
         
 
