@@ -53,6 +53,7 @@ class UIConfig:
     # dynamic font mode
     dynamic_font_mode = "fit"
     min_font_size = 8
+    fix_font_size = None
 
 
 
