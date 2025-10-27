@@ -52,7 +52,7 @@ class UIConfig:
 
     # dynamic font mode
     dynamic_font_mode = "fit"
-    min_font_size = 8
+    min_font_size = 11
     fix_font_size = None
 
 
@@ -69,7 +69,7 @@ class UIHelper:
         self.large_font_prefix_text_fixed_width = 200
 
         self.small_font = QFont() 
-        self.small_font.setPointSize(9)
+        self.small_font.setPointSize(11)
         self.small_font_line_height = 22
         self.small_font_bottom_padding = 28
         self.small_font_prefix_text_fixed_width = 100

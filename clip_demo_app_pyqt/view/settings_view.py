@@ -192,7 +192,7 @@ class SettingsView(QMainWindow):
         self.ui_config.min_font_size = self.min_font_size_input.value()
         if self.dynamic_font_mode_dropdown.currentText() == "fit + setting":
             self.ui_config.fix_font_size = self.min_font_size_input.value()
-            self.ui_config.min_font_size = 8
+            self.ui_config.min_font_size = 11
             if self.ui_config.fix_font_size > 16:
                 print("Warning: Setting a large fixed font size may cause display issues.")
                 self.ui_config.number_of_alarms = 1
@@ -200,7 +200,7 @@ class SettingsView(QMainWindow):
             self.ui_config.fix_font_size = self.min_font_size_input.value()
         if self.dynamic_font_mode_dropdown.currentText() == "fit + large mode (show top 1)":
             self.ui_config.fix_font_size = self.min_font_size_input.value()
-            self.ui_config.min_font_size = 8
+            self.ui_config.min_font_size = 11
             self.ui_config.number_of_alarms = 1
 
         # adjust video_grid_info, video_path_lists and num_channels
@@ -222,10 +222,10 @@ class SettingsView(QMainWindow):
     def __on_layout_mode_change(self, text):
         if text == "fit" or text == "word_wrap":
             self.min_font_size_input.setEnabled(False)
-            self.min_font_size_input.setValue(8)
+            self.min_font_size_input.setValue(11)
         elif text == "fit + min" or text == "fit + min + word_wrap" or text == "fit + setting" or text == "setting + word_wrap":
             self.min_font_size_input.setEnabled(True)
-            self.min_font_size_input.setValue(8)
+            self.min_font_size_input.setValue(11)
         elif text == "fit + large mode (show top 1)":
             self.min_font_size_input.setEnabled(True)
             self.min_font_size_input.setRange(14, 20)
