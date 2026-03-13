@@ -1,5 +1,8 @@
 # DX-CLIP Demo
 
+## Screenshot
+*Real-time text-video similarity matching powered by CLIP on DeepX NPU*
+
 ![DX-CLIP Demo Screenshot](img/dx-clip-demo_screenshot.png)
 
 ---
