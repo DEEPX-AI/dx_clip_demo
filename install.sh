@@ -108,7 +108,7 @@ install_deps(){
     if [[ "$APP_TYPE" == "opencv" ]]; then
         #### 3. Install packages (gstreamer, qt5 multimedia plugins for play mp3, mp4, gif files)
         pip install -r requirements.${APP_TYPE}.txt
-        pip install ./assets/CLIP
+        pip install git+https://github.com/openai/CLIP.git@main
     elif [[ "$APP_TYPE" == "pyqt" ]]; then
         #### 3. Install packages (gstreamer, qt5 multimedia plugins for play mp3, mp4, gif files)
         sudo apt-get install -y build-essential qtbase5-dev    # for source build on Ubuntu 20.04, Ubuntu 18.04
@@ -121,7 +121,7 @@ install_deps(){
 
         #### 4. Install pip packages
         pip install -r requirements.${APP_TYPE}.txt
-        pip install ./assets/CLIP
+        pip install git+https://github.com/openai/CLIP.git@main
     else
         echo -e "${TAG_ERROR:-[ERROR]} APP_TYPE must be either 'opencv' or 'pyqt'." >&2
         exit 1
