@@ -172,7 +172,7 @@ activate_venv() {
 }
 
 setup_dx_engine(){
-    echo -e "=== setup_dx_engine() ${TAG_STRT} ==="
+    echo -e "=== setup_dx_engine() ${TAG_START} ==="
     ### Setup dx_rt python package
     #### 2. Install dx_engine (dx_rt Python package)
     pushd ${DXRT_SRC_PATH}
@@ -185,13 +185,18 @@ setup_dx_engine(){
 }
 
 setup_project(){
-    echo -e "=== setup_${APP_TYPE}() ${TAG_STRT} ==="
+    echo -e "=== setup_${APP_TYPE}() ${TAG_START} ==="
     pushd ${PROJECT_ROOT}
 
     #### Install packages
-    eval ${PROJECT_ROOT}/install.sh --app_type=$APP_TYPE
+    "${PROJECT_ROOT}/install.sh" --app_type=$APP_TYPE
+    local rc=$?
 
     popd
+    if [ $rc -ne 0 ]; then
+        echo -e "${TAG_ERROR} install.sh failed (exit code: $rc). Setup aborted."
+        exit 1
+    fi
     echo -e "=== setup_${APP_TYPE}() ${TAG_DONE} ==="
 }
 

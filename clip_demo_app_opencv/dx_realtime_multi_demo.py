@@ -3,6 +3,7 @@ import argparse
 import os
 import sys
 import subprocess
+import json
 
 import numpy as np
 import torch
@@ -95,6 +96,25 @@ def _find_video_file(base_path: str, video_name: str) -> str:
     fallback_path = os.path.join(base_path, video_name + ".mp4")
     print(f"No video file found with supported extensions for '{video_name}'. Using fallback: {fallback_path}")
     return fallback_path
+
+def _load_gt_video_path_lists(features_path: str, fallback: list) -> list:
+    """
+    Load the grid video list from the sample-video pack's data.json
+    (assets/demo_videos/data.json -> "video_path_lists"). The pack ships the
+    correct filenames; the built-in `fallback` is only used when data.json is
+    absent or malformed.
+    """
+    data_json = os.path.join(features_path, "demo_videos", "data.json")
+    try:
+        with open(data_json, encoding="utf-8") as f:
+            video_path_lists = json.load(f).get("video_path_lists")
+        if video_path_lists:
+            print(f"Loaded {len(video_path_lists)} videos from {data_json}")
+            return video_path_lists
+        print(f"'video_path_lists' missing in {data_json}; using built-in list")
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"Could not read {data_json} ({e}); using built-in list")
+    return fallback
 
 def get_args():
     # fmt: off
@@ -610,8 +630,12 @@ def main():
         [
             "demo_videos/burning_car",
         ],
-    ]
-    
+    ]   # built-in fallback (used only if data.json is unavailable)
+
+    # Use the filenames shipped with the sample-video pack (data.json) so the
+    # grid matches the actually-downloaded videos; the list above is a fallback.
+    gt_video_path_lists = _load_gt_video_path_lists(args.features_path, gt_video_path_lists)
+
     # gt_video_path_lists = [
     #     [
     #         "demo_videos/fire_on_car",

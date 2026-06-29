@@ -3,6 +3,7 @@ import os
 import sys
 import subprocess
 import time
+import json
 
 import numpy as np
 import torch
@@ -76,6 +77,27 @@ def _find_video_file(base_path: str, video_name: str) -> str:
     fallback_path = os.path.join(base_path, video_name + ".mp4")
     print(f"No video file found with supported extensions for '{video_name}'. Using fallback: {fallback_path}")
     return fallback_path
+
+def _load_gt_video_path_list(features_path: str, fallback: list) -> list:
+    """
+    Load the video list from the sample-video pack's data.json
+    (<features_path>/data.json -> "video_path_lists"). Entries there look like
+    "demo_videos/<name>"; this demo resolves bare names under features_path
+    (assets/demo_videos), so strip the directory. The built-in `fallback` is
+    used only when data.json is absent or malformed.
+    """
+    data_json = os.path.join(features_path, "data.json")
+    try:
+        with open(data_json, encoding="utf-8") as f:
+            video_path_lists = json.load(f).get("video_path_lists")
+        if video_path_lists:
+            names = [os.path.basename(e[0] if isinstance(e, list) else e) for e in video_path_lists]
+            print(f"Loaded {len(names)} videos from {data_json}")
+            return names
+        print(f"'video_path_lists' missing in {data_json}; using built-in list")
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"Could not read {data_json} ({e}); using built-in list")
+    return fallback
 
 def get_args():
     # fmt: off
@@ -598,8 +620,12 @@ def main():
         "elderly_woman_fallen_indoor",
         "kitchen_stove_fire",
         "men_fighting_indoors",
-    ]
-    
+    ]   # built-in fallback (used only if data.json is unavailable)
+
+    # Use the filenames shipped with the sample-video pack (data.json) so the
+    # videos match what was actually downloaded; the list above is a fallback.
+    gt_video_path_list = _load_gt_video_path_list(args.features_path, gt_video_path_list)
+
     # gt_video_path_list = [
     #     "fire_on_car",
     #     "dam_explosion_short",

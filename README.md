@@ -3,7 +3,7 @@
 ## Screenshot
 *Real-time text-video similarity matching powered by CLIP on DeepX NPU*
 
-![DX-CLIP Demo Screenshot](img/dx-clip-demo_screenshot.png)
+![DX-CLIP Demo](img/dx_clip_demo_demoplay.gif)
 
 ---
 
@@ -53,13 +53,26 @@ A full-featured GUI variant built with the PyQT5 UI framework.
 
 ## Quick Start
 
+One command does everything — it prompts you to pick the variant
+(`pyqt` or `opencv`), downloads models/videos, creates the venv, and
+launches the demo:
+
 ```bash
-# Setup (choose app_type: opencv or pyqt)
-./setup.sh --app_type=pyqt --dxrt_src_path=/deepx/dx_rt
+./run_demo.sh
+```
 
-# Activate venv
+Skip the prompt by passing the variant:
+
+```bash
+./run_demo.sh --app_type=opencv   # or --app_type=pyqt
+```
+
+The first run invokes `setup.sh` automatically, which also downloads and builds
+**dx-runtime** if it isn't already present. To set up manually instead:
+
+```bash
+# dx-runtime is auto-cloned when missing; pass --dxrt_src_path to reuse an existing checkout
+./setup.sh --app_type=pyqt
 source venv-pyqt/bin/activate
-
-# Run
 python -m clip_demo_app_pyqt.dx_realtime_demo_pyqt
 ```

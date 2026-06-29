@@ -7,8 +7,14 @@ PROJECT_ROOT="${SCRIPT_DIR}"
 APP_TYPE="pyqt"
 
 # Default values
-DXRT_SRC_PATH=$(realpath "${PROJECT_ROOT}/../dx-runtime/dx_rt/")
+DX_RUNTIME_DIR=$(realpath -m "${PROJECT_ROOT}/../dx-runtime")
+DXRT_SRC_PATH="${DX_RUNTIME_DIR}/dx_rt"
+DXRT_SRC_PATH_USER_SET=0
 DOCKER_VOLUME_PATH=${DOCKER_VOLUME_PATH}
+
+# dx-runtime auto-download settings (overridable via env or flags)
+DXRT_GIT_URL="${DXRT_GIT_URL:-https://github.com/DEEPX-AI/dx-runtime}"
+DXRT_GIT_REF="${DXRT_GIT_REF:-main}"
 
 # color env settings
 source ${SCRIPT_DIR}/scripts/color_env.sh
@@ -26,7 +32,9 @@ show_help() {
   print_colored_v2 "YELLOW" "Example 5) $0 --app_type=pyqt --docker_volume_path=/deepx/workspace"
   print_colored_v2 "GREEN" "Options:"
   print_colored_v2 "GREEN" "  [--app_type=<str>]              Set Application type (pyqt | opencv, default: pyqt)"
-  print_colored_v2 "GREEN" "  [--dxrt_src_path=<path>]        Set DXRT source path (default: ${DXRT_SRC_PATH})"
+  print_colored_v2 "GREEN" "  [--dxrt_src_path=<path>]        Set DXRT source path (default: ${DXRT_SRC_PATH}; auto-cloned if missing)"
+  print_colored_v2 "GREEN" "  [--dxrt_git_url=<url>]          dx-runtime git URL for auto-clone (default: ${DXRT_GIT_URL})"
+  print_colored_v2 "GREEN" "  [--dxrt_git_ref=<ref>]          dx-runtime branch/tag for auto-clone (default: ${DXRT_GIT_REF})"
   print_colored_v2 "GREEN" "  [--docker_volume_path=<path>]   Set Docker volume path (required in container mode)"
   print_colored_v2 "GREEN" "  [--help]                        Show this help message"
 
@@ -41,6 +49,26 @@ show_help() {
     return 0
   fi
   exit 0
+}
+
+# Auto-clone dx-runtime (only the dx_rt submodule is needed for this demo)
+clone_dx_runtime() {
+  local dest="$1"
+
+  if ! command -v git >/dev/null 2>&1; then
+    print_colored_v2 "ERROR" "git is required to auto-download dx-runtime. Please install git or pass --dxrt_src_path."
+    exit 1
+  fi
+
+  print_colored_v2 "INFO" "dx-runtime not found. Cloning ${DXRT_GIT_URL} (${DXRT_GIT_REF}) -> ${dest}"
+  git clone --branch "${DXRT_GIT_REF}" "${DXRT_GIT_URL}" "${dest}" \
+    || { print_colored_v2 "ERROR" "Failed to clone dx-runtime from ${DXRT_GIT_URL} (${DXRT_GIT_REF})."; rm -rf "${dest}"; exit 1; }
+
+  # dx_rt is a submodule with a relative URL; init only it (resolves to the same org)
+  git -C "${dest}" submodule update --init dx_rt \
+    || { print_colored_v2 "ERROR" "Failed to initialize dx_rt submodule."; exit 1; }
+
+  print_colored_v2 "INFO" "dx-runtime downloaded. (dx_rt: ${dest}/dx_rt)"
 }
 
 main() {
@@ -113,6 +141,13 @@ for i in "$@"; do
       ;;
     --dxrt_src_path=*)
       DXRT_SRC_PATH="${i#*=}"
+      DXRT_SRC_PATH_USER_SET=1
+      ;;
+    --dxrt_git_url=*)
+      DXRT_GIT_URL="${i#*=}"
+      ;;
+    --dxrt_git_ref=*)
+      DXRT_GIT_REF="${i#*=}"
       ;;
     --docker_volume_path=*)
       DOCKER_VOLUME_PATH="${i#*=}"
@@ -132,10 +167,18 @@ if [ "$APP_TYPE" != "pyqt" ] && [ "$APP_TYPE" != "opencv" ]; then
   show_help "error" "'--app_type' option is invalid. It must be set to either 'pyqt' or 'opencv'."
 fi
 
-# Check if DXRT_SRC_PATH exists
+# Auto-download dx-runtime when the dx_rt source is missing
 if [ ! -d "$DXRT_SRC_PATH" ]; then
-  show_help "error" "'--dxrt_src_path($DXRT_SRC_PATH)' option does not exist. please set path."
+  if [ "$DXRT_SRC_PATH_USER_SET" -eq 1 ]; then
+    show_help "error" "'--dxrt_src_path($DXRT_SRC_PATH)' does not exist. please set a valid path."
+  fi
+  clone_dx_runtime "$DX_RUNTIME_DIR"
+  DXRT_SRC_PATH="${DX_RUNTIME_DIR}/dx_rt"
 fi
+if [ ! -d "$DXRT_SRC_PATH" ]; then
+  show_help "error" "dx-runtime/dx_rt not available at ($DXRT_SRC_PATH) after download attempt."
+fi
+DXRT_SRC_PATH=$(realpath "$DXRT_SRC_PATH")
 
 ASSET_PATH=./assets
 VIDEO_PATH=./assets/demo_videos

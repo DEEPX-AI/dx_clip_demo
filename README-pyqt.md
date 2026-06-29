@@ -7,12 +7,18 @@
 #### Get assets (input videos and prebuilt CLIP AI model) files
 Download the asset files using setup.sh. These files are provided separately and are not included in the distributed source code.
 
-When running setup.sh, you must specify app_type and dxrt_src_path as arguments.
-Running setup.sh will automatically download the asset files and set up a Python virtual environment (venv).
-`./setup.sh --app_type=<app_type> --dxrt_src_path=<path_to_dxrt>`
+Running setup.sh automatically downloads the asset files, sets up a Python virtual environment (venv),
+and downloads + builds **dx-runtime** if it is not already present.
+`dxrt_src_path` is optional — pass it only to point at an existing dx-runtime checkout.
 ```bash
-# exam
+# auto-download dx-runtime when missing
+./setup.sh --app_type=pyqt
+
+# or reuse an existing dx-runtime
 ./setup.sh --app_type=pyqt --dxrt_src_path=/deepx/dx_rt
+
+# override the dx-runtime repo / ref used for auto-download
+./setup.sh --app_type=pyqt --dxrt_git_url=https://github.com/DEEPX-AI/dx-runtime --dxrt_git_ref=main
 ```
 
 File structure in `./assets/`:

@@ -63,7 +63,7 @@ install_deps(){
         UBUNTU_VERSION=$(lsb_release -rs)
         echo "*** Ubuntu Version (${UBUNTU_VERSION}) detected. ***"
 
-        if [ "$UBUNTU_VERSION" = "24.04" ]; then
+        if [ "$UBUNTU_VERSION" = "24.04" ] || [ "$UBUNTU_VERSION" = "26.04" ]; then
             pip install --upgrade "setuptools<=70.0.0"
         elif [[ "$UBUNTU_VERSION" == "22.04" || "$UBUNTU_VERSION" == "20.04" || "$UBUNTU_VERSION" == "18.04" ]]; then
             pip install --upgrade pip wheel "setuptools<=70.0.0"
@@ -91,10 +91,17 @@ install_deps(){
     echo "Upgrade complete."
 
     ### Pre-Requisite
+    # tkinter ships per python version. The generic `python3-tk` tracks the
+    # system default python, which may differ from the venv interpreter and
+    # leave the venv with an empty tkinter namespace package (no _tkinter, no Tk).
+    # Pin the tk package to the venv's python version instead.
+    PYV=$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+    echo "venv python version: ${PYV}"
+
     if [[ "$APP_TYPE" == "opencv" ]]; then
         echo "Running in OpenCV mode"
         sudo add-apt-repository -y ppa:deadsnakes/ppa
-        sudo apt-get update && sudo apt-get install -y python3 python3-dev python3-venv python3-tk
+        sudo apt-get update && sudo apt-get install -y python3 python3-dev python3-venv "python${PYV}-tk"
     elif [[ "$APP_TYPE" == "pyqt" ]]; then
         echo "Running in PyQT mode"
         sudo add-apt-repository -y ppa:deadsnakes/ppa
