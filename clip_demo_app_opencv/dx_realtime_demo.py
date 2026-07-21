@@ -99,6 +99,42 @@ def _load_gt_video_path_list(features_path: str, fallback: list) -> list:
         print(f"Could not read {data_json} ({e}); using built-in list")
     return fallback
 
+def _load_gt_sentences(features_path: str, fallback_texts: list, fallback_levels: list) -> tuple:
+    """
+    Load the alarm sentences from the sample-video pack's data.json
+    (<features_path>/data.json -> "sentence_list") so the displayed texts
+    match the shipped videos. Each entry carries its own min/max/threshold;
+    entries flagged `disabled` are skipped. The built-in fallbacks are used
+    only when data.json is absent or malformed.
+    """
+    data_json = os.path.join(features_path, "data.json")
+    try:
+        with open(data_json, encoding="utf-8") as f:
+            data = json.load(f)
+        sentence_list = data.get("sentence_list")
+        if sentence_list:
+            default_level = [
+                data.get("default_sentence_score_min", 0.2),
+                data.get("default_sentence_score_max", 0.25),
+                data.get("default_sentence_score_threshold", 0.225),
+            ]
+            texts, levels = [], []
+            for s in sentence_list:
+                if s.get("disabled"):
+                    continue
+                texts.append(s["text"])
+                levels.append([
+                    s.get("min_score", default_level[0]),
+                    s.get("max_score", default_level[1]),
+                    s.get("threshold", default_level[2]),
+                ])
+            print(f"Loaded {len(texts)} sentences from {data_json}")
+            return texts, levels
+        print(f"'sentence_list' missing in {data_json}; using built-in sentences")
+    except (OSError, json.JSONDecodeError, KeyError, TypeError) as e:
+        print(f"Could not read sentences from {data_json} ({e}); using built-in sentences")
+    return fallback_texts, fallback_levels
+
 def get_args():
     # fmt: off
     parser = argparse.ArgumentParser(description="Generate Similarity Matrix from ONNX files")
@@ -672,6 +708,11 @@ def main():
         [0.23, 0.26, 0.24],  # "Fire is coming out of the car",
         [0.24, 0.28, 0.26],  # "The car is exploding",
     ]
+
+    # Use the sentences shipped with the sample-video pack (data.json) so the
+    # displayed texts match the loaded videos; the lists above are fallbacks.
+    gt_text_list, gt_text_alarm_level = _load_gt_sentences(
+        args.features_path, gt_text_list, gt_text_alarm_level)
 
     video_thread = VideoThread(args.features_path, gt_video_path_list, gt_text_list)
 
